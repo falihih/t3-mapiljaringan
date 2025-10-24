@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management User - SUPERADMIN</title>
+    <style>
+        :root {
+            --color-primary: #ff8c00; 
+            --color-text: #333333;
+            --color-danger: #dc3545;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4; 
+            padding: 30px;
+            color: var(--color-text);
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: var(--color-primary);
+            border-bottom: 3px solid #ffaa00;
+            padding-bottom: 10px;
+        }
+        .alert {
+            background-color: #ffe0b2;
+            color: #e65100;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ff8c00;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #6c757d; 
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loggedInUserRole = localStorage.getItem('loggedInUserRole');
+            
+            // HANYA SUPER ADMIN YANG BISA MENGAKSES
+            if (loggedInUserRole !== 'SuperAdmin') {
+                alert('🚨 Akses Ditolak! Anda tidak memiliki izin SuperAdmin untuk mengakses halaman manajemen pengguna.');
+                window.location.href = 'admin_dashboard.html';
+                return;
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Management User & Data Sekolah</h1>
+        <div class="alert">
+            <p><strong>Akses Khusus SuperAdmin (admin123).</strong></p>
+            <p>Di halaman ini, Anda dapat menambahkan dan mengelola data peserta, siswa, guru, serta mengedit mata pelajaran dan kelas. Saat ini, halaman ini berfungsi sebagai simulasi.</p>
+        </div>
+        
+        <h2>Simulasi Form Penambahan Pengguna</h2>
+        <p>*(Di sini Anda dapat menempatkan Form HTML dan logika JavaScript untuk menambah data user.)*</p>
+        
+        <button class="back-button" onclick="window.location.href='admin_dashboard.html'">← Kembali ke Dashboard</button>
+    </div>
+</body>
+</html>

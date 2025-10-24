@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Login Member SMK ASTAMITRA</title>
+    
+    <style>
+        /* Warna Utama Berdasarkan Logo */
+        :root {
+            --color-primary: #ff8c00; /* Orange Stabilo/Logo */
+            --color-secondary: #e0e0e0; /* Abu-abu terang */
+            --color-text: #333333;
+            --color-dark-text: #1a1a1a;
+            --color-background: #f4f4f4; /* Abu-abu Muda Cerah */
+            --color-danger: #dc3545;
+        }
+
+        /* Gaya Dasar dan Tema Terang */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Gaya Kotak Login */
+        .login-box {
+            width: 380px; 
+            max-width: 90%;
+            padding: 40px;
+            background: white; 
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
+            text-align: left;
+        }
+
+        /* Area Logo */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .logo-area img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+
+        /* Gaya Judul */
+        h1 {
+            color: var(--color-dark-text); 
+            margin-bottom: 5px;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        /* Nama Sekolah */
+        .school-name {
+            color: var(--color-primary); 
+            font-size: 1.1em;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Teks Deskripsi */
+        .subtitle {
+            margin-bottom: 20px;
+            color: var(--color-text);
+            text-align: center;
+        }
+        
+        /* Grup Input & Select */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .input-container { position: relative; }
+
+        .input-container input,
+        .input-container select {
+            width: 100%;
+            padding: 12px;
+            background: #ffffff; 
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            color: var(--color-text);
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-container input:focus,
+        .input-container select:focus {
+            border-color: var(--color-primary); 
+            box-shadow: 0 0 5px rgba(255, 140, 0, 0.4);
+            outline: none;
+        }
+        
+        /* Tombol Tampilkan Password */
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        /* Pilihan Tipe Akun */
+        .account-type-selection {
+            margin-bottom: 30px;
+        }
+        .account-type-selection label {
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        .type-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .type-buttons button {
+            padding: 10px 5px;
+            border: 2px solid var(--color-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            background-color: transparent;
+            color: var(--color-text);
+        }
+
+        /* Warna Tombol Aktif (Oranye) */
+        .type-buttons button.active-type {
+            background-color: var(--color-primary); 
+            color: white;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 5px rgba(255, 140, 0, 0.4);
+        }
+
+        /* Gaya Tombol Masuk */
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--color-primary); 
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-button:hover {
+            background-color: #cc7000; 
+        }
+        
+        /* Pesan Status */
+        #login-message {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="logo-area">
+            <img src="Logo_smk_astamitra.PNG" alt="Logo SMK Astamitra Purwodadi"> 
+            <h1>Login member</h1>
+        </div>
+        
+        <div class="school-name">SMK ASTAMITRA PURWODADI</div>
+        <p class="subtitle">Silakan masukkan detail akun Anda.</p>
+        
+        <form onsubmit="return handleLogin(event);">
+            
+            <div class="input-group">
+                <label for="username">Username/Nama Lengkap</label>
+                <div class="input-container">
+                    <input type="text" id="username" name="username" placeholder="Masukkan Nama Lengkap Anda" required>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="input-container">
+                    <input type="password" id="password" name="password" placeholder="Masukkan Password" required>
+                    <span class="toggle-password" onclick="togglePasswordVisibility()">
+                        👁️
+                    </span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="mapel">Pilih Mata Pelajaran/Menu Akses</label>
+                <div class="input-container">
+                    <select id="mapel" name="mapel" required>
+                        <option value="">-- Pilih Akses Anda --</option>
+                        <option value="AdminManager">Admin Management Pengguna</option>
+                        <option value="Jaringan">Mapel Jaringan</option>
+                        <option value="Desain">Mapel Desain</option>
+                        <option value="Komputer">Mapel Komputer</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="account-type-selection">
+                <label>Pilih type akun</label>
+                <div class="type-buttons">
+                    <button type="button" data-role="Siswa" class="active-type" onclick="selectAccountType(event, 'Siswa')">Siswa</button>
+                    <button type="button" data-role="Guru" onclick="selectAccountType(event, 'Guru')">Guru</button>
+                    <button type="button" data-role="Orangtua" onclick="selectAccountType(event, 'Orangtua')">Orangtua</button>
+                </div>
+                <input type="hidden" id="account-type" value="Siswa"> 
+            </div>
+            
+            <button type="submit" class="login-button">Masuk</button>
+            
+            <p id="login-message"></p>
+        </form>
+    </div>
+
+    <script>
+        // --- INISIALISASI DATA PENGGUNA (Local Storage) ---
+        function initUsers() {
+            let users = JSON.parse(localStorage.getItem('USERS'));
+            let contact = JSON.parse(localStorage.getItem('adminContact'));
+
+            if (!users) {
+                // Data default jika Local Storage kosong
+                users = [
+                    { username: "Muhammad Falih Zudha", password: "123", role: "Siswa", mapel: "Jaringan", class: "XI" },
+                    { username: "Bilal", password: "123", role: "Siswa", mapel: "Komputer", class: "XI" },
+                    { username: "Eko Prasetya Nugraha", password: "admin", role: "Guru", mapel: "Jaringan", class: "Guru" }, 
+                    { username: "Imam", password: "admin", role: "Guru", mapel: "Komputer", class: "Guru" }, 
+                    { username: "AdminUtama", password: "admin123", role: "SuperAdmin", mapel: "AdminManager", class: "Admin" }, 
+                    { username: "AyahFalih", password: "456", role: "Orangtua", mapel: "NA", class: "NA" },
+                ];
+                localStorage.setItem('USERS', JSON.stringify(users));
+            }
+            // Inisialisasi kontak admin jika belum ada
+            if (!contact) {
+                localStorage.setItem('adminContact', JSON.stringify({ phone: '081xxxxxxxxxx', email: 'muhammadfalihzudha@gmail.com' }));
+            }
+        }
+        initUsers();
+
+        // Mencegah Akses Dashboard Jika Belum Login
+        if (localStorage.getItem('loggedInUserRole')) {
+            window.location.href = "admin_dashboard.html"; 
+        }
+        
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.querySelector('.toggle-password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.textContent = '🔒'; 
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.textContent = '👁️'; 
+            }
+        }
+
+        function selectAccountType(event, type) {
+            document.querySelectorAll('.type-buttons button').forEach(btn => {
+                btn.classList.remove('active-type'); 
+            });
+            event.target.classList.add('active-type');
+            document.getElementById('account-type').value = type;
+            
+            const mapelSelect = document.getElementById('mapel');
+            const mapelLabel = mapelSelect.parentElement.parentElement.querySelector('label');
+
+            if (type === 'Siswa' || type === 'Guru') {
+                mapelSelect.setAttribute('required', 'required');
+                mapelSelect.style.display = 'block';
+                mapelLabel.style.display = 'block';
+                mapelLabel.textContent = 'Pilih Mata Pelajaran/Akses';
+            } else { 
+                mapelSelect.removeAttribute('required');
+                mapelSelect.style.display = 'none';
+                mapelLabel.style.display = 'none';
+                mapelSelect.value = ''; // Reset nilai mapel untuk Orangtua
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault(); 
+            
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+            const accountType = document.getElementById('account-type').value;
+            const mapelInput = document.getElementById('mapel').value; 
+            const messageElement = document.getElementById('login-message');
+            const USERS = JSON.parse(localStorage.getItem('USERS'));
+            
+            messageElement.textContent = "";
+            messageElement.style.color = "red";
+
+            let userFound = null;
+
+            if (accountType === 'Orangtua') {
+                // Logika otentikasi untuk Orangtua
+                userFound = USERS.find(u => 
+                    u.username === usernameInput && 
+                    u.password === passwordInput && 
+                    u.role === 'Orangtua'
+                );
+            } else {
+                // Validasi Mapel untuk Siswa/Guru
+                if (mapelInput === "" && accountType !== 'Orangtua') {
+                    messageElement.textContent = "❌ Harap pilih Mata Pelajaran/Akses Anda.";
+                    return false;
+                }
+                
+                // Logika otentikasi Siswa/Guru/AdminManager
+                userFound = USERS.find(u => 
+                    u.username === usernameInput && 
+                    u.password === passwordInput && 
+                    u.mapel === mapelInput &&
+                    // Memastikan role yang dipilih sesuai dengan role di data
+                    (u.role.toLowerCase() === accountType.toLowerCase() || (u.role === 'SuperAdmin' && accountType === 'Guru' && mapelInput === 'AdminManager'))
+                );
+            }
+            
+            if (userFound) {
+                messageElement.textContent = `✅ Login sebagai ${userFound.role} Berhasil! Mengarahkan ke Dashboard...`;
+                messageElement.style.color = "green";
+                
+                // SIMPAN STATUS KE LOCAL STORAGE UNTUK DASHBOARD
+                localStorage.setItem('loggedInUserRole', userFound.role); 
+                localStorage.setItem('loggedInMapel', userFound.mapel); 
+                localStorage.setItem('loggedInClass', userFound.class); 
+                localStorage.setItem('loggedInUsername', userFound.username);
+                
+                setTimeout(() => {
+                    // PENGARAHAN KE DASHBOARD
+                    window.location.href = "admin_dashboard.html";
+                }, 1000); 
+
+            } else {
+                 messageElement.textContent = "❌ Username, Password, atau Pilihan Akses tidak cocok. Silakan coba lagi.";
+            }
+            
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Memastikan tombol 'Siswa' aktif saat dimuat, dan mengatur Mapel
+            const siswaButton = document.querySelector('.type-buttons button[data-role="Siswa"]');
+            if (siswaButton) {
+                selectAccountType({target: siswaButton}, 'Siswa');
+            }
+        });
+    </script>
+</body>
+</html>

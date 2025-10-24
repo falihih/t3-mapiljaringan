@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materi Komputer Kelas XI - SMK Astamitra</title>
+    <style>
+        :root {
+            --color-primary: #ff8c00; 
+            --color-text: #333333;
+            --color-secondary: #4CAF50; /* Warna Hijau untuk Komputer */
+            --color-danger: #dc3545;
+        }
+        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px; color: var(--color-text);}
+        .container {background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); max-width: 900px; margin: 0 auto; position: relative;}
+        h1 {color: var(--color-primary); border-bottom: 3px solid var(--color-secondary); padding-bottom: 10px;}
+        h2 {color: var(--color-secondary); margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px;}
+        .materi-item {background-color: #e8f5e9; padding: 15px; margin-bottom: 10px; border-left: 5px solid var(--color-secondary); border-radius: 4px; display: flex; justify-content: space-between; align-items: center;}
+        .materi-item a {text-decoration: none; color: var(--color-secondary); font-weight: bold; padding: 5px 10px; border: 1px solid var(--color-secondary); border-radius: 4px; transition: background-color 0.3s;}
+        .materi-item a:hover {background-color: var(--color-secondary); color: white;}
+        .back-button {display: inline-block; padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;}
+        .logout-button { position: absolute; top: 10px; right: 10px; padding: 10px 15px; background-color: var(--color-danger); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+    </style>
+    
+    <script>
+        const REQUIRED_MAPEL = 'Komputer';
+        const REQUIRED_CLASS = 'XI';
+
+        function logout() {
+            localStorage.clear();
+            alert('Anda telah logout. Sampai jumpa!');
+            window.location.href = 'login.html'; 
+        }
+
+        function goBack() { window.location.href = 'pilihan_menu.html'; }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const loggedInMapel = localStorage.getItem('loggedInMapel');
+            const loggedInUserRole = localStorage.getItem('loggedInUserRole');
+            const loggedInClass = localStorage.getItem('loggedInClass');
+
+            if (!loggedInUserRole) { window.location.href = 'login.html'; return; }
+            if (loggedInUserRole === 'Guru' || loggedInUserRole === 'SuperAdmin') { return; }
+            
+            // Validasi Siswa
+            if (loggedInMapel !== REQUIRED_MAPEL || loggedInClass !== REQUIRED_CLASS) {
+                alert(`⚠️ Akses Ditolak! Anda tidak terdaftar untuk Materi ${REQUIRED_MAPEL} Kelas ${REQUIRED_CLASS}.`);
+                window.location.href = 'pilihan_menu.html';
+                return;
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <button class="logout-button" onclick="logout()">Logout</button> 
+        <h1>Materi Mata Pelajaran KOMPUTER</h1>
+        <h2>Kelas XI (Tingkat Menengah)</h2>
+        <p>Anda login sebagai siswa Komputer. Selamat datang!</p>
+        
+        <h2>Modul Pembelajaran Utama</h2>
+        <div class="materi-item"><span>Bab 1: Instalasi & Konfigurasi Sistem Operasi Jaringan</span><a href="#" onclick="alert('Simulasi mengunduh/melihat PDF Bab 1')">Lihat Modul</a></div>
+
+        <h2>Link Tugas dan Proyek</h2>
+        <div class="materi-item" style="background-color: #fff3e0; border-left-color: var(--color-primary);">
+            <span>Tugas Praktikum: Instalasi OS via VirtualBox</span>
+            <a href="#" onclick="alert('Simulasi: Link Google Drive Tugas Mapel Komputer')">Kirim Tugas</a>
+        </div>
+
+        <button class="back-button" onclick="goBack()">← Kembali ke Menu Pilihan</button>
+    </div>
+</body>
+</html>

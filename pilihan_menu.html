@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Pilihan Materi - SMK Astamitra</title>
+    <style>
+        :root {
+            --color-primary: #ff8c00; 
+            --color-text: #333333;
+            --color-danger: #dc3545;
+            --color-success: #28a745;
+        }
+        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px; color: var(--color-text);}
+        .container {background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); max-width: 800px; margin: 0 auto; position: relative;}
+        h1 {color: var(--color-primary); margin-bottom: 5px;}
+        .info-bar { background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #ffeeba; font-weight: 600; }
+        .menu-section { margin-bottom: 40px; }
+        .menu-section h2 { border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; color: #555; }
+        .btn-group button { display: block; width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: all 0.3s; text-align: left; }
+        .btn-mapel.active-mapel { background-color: var(--color-success); color: white; border-color: var(--color-success); }
+        .btn-mapel.inactive-mapel { background-color: #f8f9fa; color: #6c757d; border-style: dashed; }
+        .btn-class { background-color: #007bff; color: white; border-color: #007bff; opacity: 0.7; }
+        .btn-mapel.selected { border-style: dotted !important; border-width: 3px !important; }
+        .btn-class.selected { border-style: dotted !important; border-width: 3px !important; background-color: #0056b3; }
+        .back-button { display: inline-block; padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .logout-button { position: absolute; top: 10px; right: 10px; padding: 10px 15px; background-color: var(--color-danger); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        
+        .action-area { text-align: center; margin-top: 30px; }
+        #lanjutkan-btn { 
+            padding: 15px 30px; 
+            background-color: var(--color-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 1.2em; 
+            font-weight: bold; 
+            cursor: pointer;
+            display: none; /* Sembunyikan secara default */
+        }
+    </style>
+    
+    <script>
+        const loggedInMapel = localStorage.getItem('loggedInMapel');
+        const loggedInUser = localStorage.getItem('loggedInUsername');
+        const loggedInRole = localStorage.getItem('loggedInUserRole');
+        const loggedInClass = localStorage.getItem('loggedInClass'); 
+        
+        let selectedMapel = null;
+        let selectedClass = null;
+
+        function logout() {
+            localStorage.clear();
+            alert('Anda telah logout. Sampai jumpa!');
+            window.location.href = 'login.html'; 
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!loggedInRole) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Update Info Bar
+            const infoBar = document.getElementById('info-mapel');
+            infoBar.innerHTML = `Anda login sebagai **${loggedInRole}** (${loggedInUser}). Akses Mapel: **${loggedInMapel.toUpperCase()}**. Kelas Terdaftar: **${loggedInClass}**.`;
+            
+            // Tandai tombol Mapel/Kelas yang sesuai
+            document.querySelectorAll('.btn-mapel').forEach(btn => {
+                const mapelName = btn.getAttribute('data-mapel');
+                if (loggedInRole === 'Siswa' && mapelName !== loggedInMapel) {
+                    btn.classList.add('inactive-mapel');
+                    btn.setAttribute('disabled', 'true');
+                } else {
+                    btn.classList.add('active-mapel');
+                }
+            });
+        });
+
+        function updateLanjutkanButton() {
+            const btn = document.getElementById('lanjutkan-btn');
+            if (selectedMapel && selectedClass) {
+                btn.style.display = 'block';
+                btn.textContent = `Masuk ke Materi ${selectedMapel} Kelas ${selectedClass}`;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        function selectMapel(mapel, event) {
+            selectedMapel = mapel;
+            document.querySelectorAll('.btn-mapel').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            updateLanjutkanButton();
+        }
+
+        function selectClass(kelas, event) {
+            selectedClass = kelas;
+            document.querySelectorAll('.btn-class').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            updateLanjutkanButton();
+        }
+        
+        // --- Fungsi Utama untuk Navigasi dan Validasi Akhir ---
+        function accessMateri() {
+            if (!selectedMapel || !selectedClass) {
+                alert('⚠️ Harap pilih Mata Pelajaran dan Kelas Anda terlebih dahulu.');
+                return;
+            }
+
+            // Daftar File Materi yang sudah dibuat
+            const availableFiles = {
+                'JaringanXI': 'materi_jaringan_xi.html', // Falih
+                'KomputerXI': 'materi_komputer_xi.html', // Bilal
+                'DesainX': 'materi_desain_x.html', 
+            };
+            
+            const fileKey = `${selectedMapel}${selectedClass}`;
+            const targetFile = availableFiles[fileKey];
+            
+            // Validasi Khusus Siswa
+            if (loggedInRole === 'Siswa') {
+                if (selectedMapel !== loggedInMapel) {
+                    alert(`❌ Akses Ditolak! Anda terdaftar di Mapel ${loggedInMapel.toUpperCase()}.`);
+                    return; 
+                }
+                // Validasi ini diperlukan karena Falih (Jaringan) mungkin coba akses Jaringan XII
+                 if (selectedClass !== loggedInClass) {
+                    alert(`❌ Akses Ditolak! Anda terdaftar di Kelas ${loggedInClass}. Silakan pilih Kelas yang sesuai.`);
+                    return; 
+                }
+            }
+
+
+            // Cek Ketersediaan File Materi
+            if (!targetFile) {
+                alert(`⚠️ Maaf! Materi ${selectedMapel} Kelas ${selectedClass} belum tersedia/belum dibuat filenya di sistem.`);
+                return;
+            }
+            
+            // Jika Lolos, Navigasi
+            alert(`✅ Akses Diberikan! Mengarahkan ke Materi ${selectedMapel} Kelas ${selectedClass}...`);
+            window.location.href = targetFile;
+        }
+
+        function goBack() {
+            window.location.href = 'admin_dashboard.html';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <button class="logout-button" onclick="logout()">Logout</button> 
+        <h1>Menu Materi Pembelajaran</h1>
+        
+        <div class="info-bar" id="info-mapel">
+            </div>
+
+        <div class="menu-section">
+            <h2>Pilih Mata Pelajaran</h2>
+            <div class="btn-group">
+                <button type="button" class="btn-mapel" data-mapel="Jaringan" onclick="selectMapel('Jaringan', event)">Mapel Jaringan</button>
+                <button type="button" class="btn-mapel" data-mapel="Komputer" onclick="selectMapel('Komputer', event)">Mapel Komputer</button>
+                <button type="button" class="btn-mapel" data-mapel="Desain" onclick="selectMapel('Desain', event)">Mapel Desain</button>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <h2>Pilihan Kelas</h2>
+            <p>Pilih kelas yang sesuai dengan data Anda.</p>
+            <div class="btn-group">
+                <button type="button" class="btn-class" data-class="X" onclick="selectClass('X', event)">Kelas X</button>
+                <button type="button" class="btn-class" data-class="XI" onclick="selectClass('XI', event)">Kelas XI</button>
+                <button type="button" class="btn-class" data-class="XII" onclick="selectClass('XII', event)">Kelas XII</button>
+            </div>
+        </div>
+        
+        <div class="action-area">
+            <button id="lanjutkan-btn" onclick="accessMateri()">Masuk ke Materi</button>
+        </div>
+
+        <button class="back-button" onclick="goBack()">← Kembali ke Dashboard</button>
+    </div>
+</body>
+</html>

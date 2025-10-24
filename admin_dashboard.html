@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | SMK ASTAMITRA PURWODADI</title>
+    <style>
+        :root {
+            --color-primary: #ff8c00; 
+            --color-text: #333333;
+            --color-link: #007bff;
+            --color-danger: #dc3545;
+            --color-success: #28a745;
+            --color-admin: #008CBA; 
+            --color-guru: #17a2b8; 
+            --color-siswa: #28a745;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            color: var(--color-text);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap; 
+        }
+        
+        .header { width: 100%; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end;}
+        .header h2 { color: var(--color-primary); margin: 0 0 5px 0; font-size: 1.5em; text-align: left; }
+        .header .user-info { font-size: 0.9em; color: #666; text-align: right; }
+        
+        .main-layout { display: flex; width: 100%; }
+        .sidebar { width: 30%; padding-right: 30px; border-right: 1px solid #eee; box-sizing: border-box; }
+        .main-content { width: 70%; padding-left: 30px; box-sizing: border-box; }
+        
+        h3 { color: var(--color-primary); border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; margin-top: 0; }
+        .profile-section { margin-bottom: 30px; }
+        .logout-button { width: 100%; padding: 10px; background-color: var(--color-danger); color: white; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; margin-top: 20px; }
+        
+        .menu-access { background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .button-group button { padding: 10px 15px; border: 1px solid #ccc; background-color: white; border-radius: 5px; cursor: pointer; font-weight: 600; margin-right: 10px; transition: background-color 0.3s; margin-bottom: 5px;}
+        .button-group button.active { background-color: var(--color-guru); color: white; border-color: var(--color-guru); }
+
+        .data-list { list-style: none; padding: 0; }
+        .data-list li { background-color: #fff; padding: 10px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #ccc; }
+        .data-list li:nth-child(odd) { background-color: #f9f9f9; }
+        .data-list li:hover { background-color: #e9e9e9; }
+        .data-list#user-list li { border-left-color: var(--color-admin); }
+
+        .form-group { margin-bottom: 10px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        
+    </style>
+</head>
+<body>
+    
+    <input type="file" id="file-input-changer" accept="image/*" style="display: none;"> 
+
+    <div class="container">
+        
+        <div class="header">
+            <div>
+                <h2>Dashboard Aplikasi Sekolah</h2>
+            </div>
+            <div class="user-info">
+                Selamat datang **<span id="username-display">...</span>** dari **SMK ASTAMITRA PURWODADI**. Anda login sebagai <span id="role-text">...</span> untuk Akses "**<span id="mapel-display">...</span>**".
+            </div>
+        </div>
+        
+        <div class="main-layout">
+            
+            <div class="sidebar">
+                </div>
+
+            <div class="main-content">
+                <p>Memuat konten...</p>
+            </div>
+        
+        </div> 
+
+    </div>
+
+    <script>
+        // Data Login Global
+        const loggedInRole = localStorage.getItem('loggedInUserRole');
+        const loggedInMapel = localStorage.getItem('loggedInMapel');
+        const loggedInClass = localStorage.getItem('loggedInClass');
+        const loggedInUsername = localStorage.getItem('loggedInUsername');
+        
+        // --- LOGIKA INITIATION & LOGOUT ---
+
+        function logout() {
+            localStorage.clear();
+            alert('Anda telah logout. Anda akan diarahkan ke halaman login.');
+            window.location.href = 'loginb.html'; 
+        }
+
+        // FUNGSI BARU: Mendapatkan Tanggal (YYYY-MM-DD) dan Waktu (HH:MM:SS) Lokal yang Konsisten
+        function getLocalISODate() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000; 
+            const localTime = new Date(now.getTime() - offset);
+            // Hanya mengambil bagian tanggal (YYYY-MM-DD) untuk pengecekan hari
+            return localTime.toISOString().slice(0, 10);
+        }
+
+        function getFullLocalTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+            // Format waktu lokal Indonesia (contoh: Jumat, 25 Oktober 2025, 15:30:00 WIB)
+            return now.toLocaleDateString('id-ID', options); 
+        }
+
+        // --- MANAJEMEN DATA PROFIL (Foto untuk Admin/Guru/Siswa) ---
+
+        function loadProfileData() {
+            let profileData = JSON.parse(localStorage.getItem('profileData')) || {};
+            // Untuk Siswa, ambil data foto dari siswaData jika ada
+            if (loggedInRole === 'Siswa') {
+                 let siswaData = JSON.parse(localStorage.getItem('siswaData')) || {};
+                 const siswaProfile = siswaData[loggedInUsername] || {};
+                 profileData[loggedInUsername] = { photo: siswaProfile.photo };
+            }
+            
+            const currentProfile = profileData[loggedInUsername] || {};
+            const profilePic = document.getElementById('profile-pic');
+            if(profilePic) profilePic.src = currentProfile.photo || 'user_default_avatar.png';
+        }
+
+        function choosePhoto() {
+            document.getElementById('file-input-changer').click(); 
+        }
+        
+        function deletePhoto() {
+            document.getElementById('profile-pic').src = 'user_default_avatar.png';
+            saveProfileData();
+            alert('Foto Profil Dihapus!');
+        }
+        
+        function saveProfileData() {
+            let profileData = JSON.parse(localStorage.getItem('profileData')) || {};
+            profileData[loggedInUsername] = {
+                photo: document.getElementById('profile-pic').src 
+            };
+            localStorage.setItem('profileData', JSON.stringify(profileData));
+            
+            // Simpan juga di siswaData jika role adalah Siswa
+            if (loggedInRole === 'Siswa') {
+                 let siswaData = JSON.parse(localStorage.getItem('siswaData')) || {};
+                 siswaData[loggedInUsername] = siswaData[loggedInUsername] || {};
+                 siswaData[loggedInUsername].photo = document.getElementById('profile-pic').src;
+                 localStorage.setItem('siswaData', JSON.stringify(siswaData));
+            }
+        }
+        
+        // --- FUNGSI SISWA ---
+
+        function loadSiswaData() {
+            let siswaData = JSON.parse(localStorage.getItem('siswaData')) || {};
+            let currentSiswa = siswaData[loggedInUsername] || {};
+
+            if (document.getElementById('nisn-input')) {
+                document.getElementById('nisn-input').value = currentSiswa.nisn || '';
+                document.getElementById('nis-input').value = currentSiswa.nis || '';
+                document.getElementById('kelas-input').value = currentSiswa.kelas || loggedInClass;
+                document.getElementById('sekolah-input').value = currentSiswa.sekolah || 'SMK ASTAMITRA PURWODADI';
+            }
+            
+            // Absensi (MEMASTIKAN ABSENSI SISWA MENGGUNAKAN TANGGAL KONSISTEN)
+            const absensi = JSON.parse(localStorage.getItem('absensi')) || {};
+            const todayDateKey = getLocalISODate(); // Hanya ambil YYYY-MM-DD untuk pengecekan
+            
+            let statusText = 'Anda belum Absen hari ini.';
+            let statusColor = 'var(--color-danger)';
+            
+            if (absensi[loggedInUsername] && absensi[loggedInUsername].dateKey === todayDateKey) {
+                // Ambil waktu dari object absensi yang spesifik
+                const absensiTime = absensi[loggedInUsername].time || 'Waktu tidak tercatat'; 
+                statusText = `Anda sudah Absen hari ini pada **${absensiTime}**`;
+                statusColor = 'var(--color-success)';
+            }
+            
+            const absensiStatus = document.getElementById('absensi-status-text');
+            if (absensiStatus) {
+                absensiStatus.innerHTML = statusText;
+                absensiStatus.style.color = statusColor;
+            }
+            
+            loadProfileData(); 
+        }
+
+        function saveSiswaData() {
+            let siswaData = JSON.parse(localStorage.getItem('siswaData')) || {};
+            siswaData[loggedInUsername] = {
+                nisn: document.getElementById('nisn-input').value,
+                nis: document.getElementById('nis-input').value,
+                kelas: document.getElementById('kelas-input').value,
+                sekolah: document.getElementById('sekolah-input').value,
+                photo: document.getElementById('profile-pic').src 
+            };
+            localStorage.setItem('siswaData', JSON.stringify(siswaData));
+            saveProfileData(); 
+            alert('Data Profil Berhasil Disimpan!');
+        }
+
+        // FUNGSI ABSENSI SISWA (TERMASUK PERBAIKAN SINKRONISASI DAN TANGGAL)
+        function doAbsen() {
+            let absensi = JSON.parse(localStorage.getItem('absensi')) || {};
+            const todayDateKey = getLocalISODate(); // YYYY-MM-DD
+            const fullTime = getFullLocalTime();    // Waktu Lengkap (Hari, Tanggal, Jam)
+            
+            if (absensi[loggedInUsername] && absensi[loggedInUsername].dateKey === todayDateKey) {
+                alert('Anda sudah absen hari ini pada ' + absensi[loggedInUsername].time + '!');
+                return;
+            }
+            
+            // Catat data absensi sebagai objek agar bisa menyimpan waktu lengkap
+            absensi[loggedInUsername] = {
+                dateKey: todayDateKey, // Untuk pengecekan hari
+                time: fullTime,        // Waktu lengkap untuk ditampilkan
+                timestamp: new Date().getTime() // Waktu Unix untuk sorting
+            };
+            localStorage.setItem('absensi', JSON.stringify(absensi));
+            alert('✅ Absensi hari ini berhasil dicatat pada ' + fullTime + '!');
+            
+            // 1. Muat ulang status absensi di dashboard Siswa
+            loadSiswaData(); 
+            
+            // 2. Jika saat ini pengguna adalah GURU atau ADMIN, panggil fungsi muat ulang absensi
+            if (loggedInRole === 'Guru' || loggedInRole === 'SuperAdmin') {
+                if (typeof loadTeacherDashboard === 'function') {
+                    // Paksa memuat ulang konten, langsung ke tab absensi untuk sinkronisasi data
+                    loadTeacherDashboard('absensi'); 
+                }
+            }
+        }
+
+        // --- FUNGSI GURU ---
+
+        function addNewStudentByTeacher(event) {
+            event.preventDefault();
+            const username = document.getElementById('new-siswa-username').value.trim();
+            const password = document.getElementById('new-siswa-password').value.trim();
+            const class_ = document.getElementById('new-siswa-class').value;
+            const mapel = loggedInMapel; 
+
+            let users = JSON.parse(localStorage.getItem('USERS'));
+            
+            if (users.some(u => u.username === username)) {
+                alert('❌ Gagal: Username Siswa sudah ada!');
+                return false;
+            }
+
+            if(class_ === "") {
+                alert('❌ Gagal: Harap pilih kelas siswa!');
+                return false;
+            }
+
+            const newStudent = { username, password, role: "Siswa", mapel: mapel, class: class_ };
+            users.push(newStudent);
+            localStorage.setItem('USERS', JSON.stringify(users));
+            
+            alert(`✅ Siswa Baru (${username}) untuk Mapel ${mapel} berhasil ditambahkan! Password: ${password}`);
+            
+            loadTeacherDashboard('management'); // Muat ulang dashboard guru ke tab management
+            event.target.reset();
+            return true;
+        }
+        
+        /**
+         * Fungsi untuk memuat dashboard guru dengan tampilan tab yang berbeda
+         * @param {string} tab - 'management' (default) atau 'absensi'
+         */
+        function loadTeacherDashboard(tab = 'management') {
+            const driveLink = "https://drive.google.com/drive/folders/1u7bBbkQkZEGyLM_LyUStHkrFIqKptyqm?hl=ID";
+            const mainContent = document.querySelector('.main-content');
+            
+            const managementActive = tab === 'management' ? 'active' : '';
+            const absensiActive = tab === 'absensi' ? 'active' : '';
+
+            mainContent.innerHTML = `
+                <div class="admin-box" style="border-color: var(--color-guru); background-color: #f0f8ff; padding: 20px; border-radius: 8px;">
+                    <h3>Menu Guru Pembimbing Mapel ${loggedInMapel.toUpperCase()}</h3>
+                    
+                    <div class="button-group" style="margin-bottom: 20px;">
+                        <button class="${managementActive}" onclick="loadTeacherDashboard('management')">Management Siswa & Tugas</button>
+                        <button class="${absensiActive}" onclick="loadTeacherDashboard('absensi')">Daftar Absensi Siswa</button>
+                    </div>
+
+                    <div id="teacher-content-area">
+                        </div>
+                </div>
+            `;
+            
+            if (tab === 'management') {
+                loadTeacherManagement();
+            } else if (tab === 'absensi') {
+                loadAbsensiList();
+            }
+            
+            loadProfileData(); 
+        }
+        
+        // FUNGSI: Menampilkan Daftar Absensi Siswa (MEMASTIKAN GURU MENGGUNAKAN TANGGAL KONSISTEN)
+        function loadAbsensiList() {
+            const users = JSON.parse(localStorage.getItem('USERS'));
+            const absensi = JSON.parse(localStorage.getItem('absensi')) || {};
+            const todayDateKey = getLocalISODate(); // YYYY-MM-DD
+            
+            // Filter siswa yang di bawah bimbingan guru ini
+            const mapelStudents = users.filter(u => u.role === 'Siswa' && u.mapel === loggedInMapel);
+            
+            let hadirHtml = '';
+            let belumAbsenHtml = '';
+            let hadirCount = 0;
+            let belumCount = 0;
+
+            mapelStudents.forEach(s => {
+                // Cek apakah ada data absensi untuk siswa dan apakah dateKey-nya sesuai dengan hari ini
+                const isHadir = absensi[s.username] && absensi[s.username].dateKey === todayDateKey;
+                
+                if (isHadir) {
+                    hadirCount++;
+                    const absensiTime = absensi[s.username].time || 'Waktu tidak tercatat'; 
+                    hadirHtml += `<li style="border-left-color: var(--color-success);">
+                                    <div>
+                                        <strong>${s.username}</strong> (Kelas ${s.class})
+                                        <small style="color:var(--color-success); margin-left:10px;">Status: HADIR pada ${absensiTime}</small>
+                                    </div> 
+                                </li>`;
+                } else {
+                    belumCount++;
+                    belumAbsenHtml += `<li style="border-left-color: var(--color-danger);">
+                                        <div>
+                                            <strong>${s.username}</strong> (Kelas ${s.class})
+                                            <small style="color:var(--color-danger); margin-left:10px;">Status: BELUM ABSEN</small>
+                                        </div> 
+                                    </li>`;
+                }
+            });
+
+            const contentArea = document.getElementById('teacher-content-area');
+            contentArea.innerHTML = `
+                <h4>Daftar Absensi Siswa Mapel ${loggedInMapel.toUpperCase()} Hari Ini (${getLocalISODate()})</h4>
+                <p>Total Siswa: ${mapelStudents.length} | **Hadir: ${hadirCount}** | **Belum Absen: ${belumCount}**</p>
+                
+                <h5 style="color: var(--color-success); margin-top: 15px;">✅ Siswa Sudah Absen (${hadirCount} Peserta)</h5>
+                <ul class="data-list">${hadirHtml || '<p style="margin-left: 20px;">Belum ada siswa yang absen hari ini.</p>'}</ul>
+                
+                <h5 style="color: var(--color-danger); margin-top: 20px;">❌ Siswa Belum Absen (${belumCount} Peserta)</h5>
+                <ul class="data-list">${belumAbsenHtml || '<p style="margin-left: 20px;">Semua siswa sudah absen!</p>'}</ul>
+            `;
+        }
+
+        // FUNGSI: Menampilkan Management Siswa & Tugas
+        function loadTeacherManagement() {
+             const users = JSON.parse(localStorage.getItem('USERS'));
+             const mapelStudents = users.filter(u => u.role === 'Siswa' && u.mapel === loggedInMapel);
+            
+             let studentListHtml = '';
+             mapelStudents.forEach(s => {
+                 studentListHtml += `<li style="border-left-color: var(--color-guru);">
+                                        <div>
+                                            <strong>${s.username}</strong> (Kelas ${s.class})
+                                            <small style="color:#888;">Pass: ${s.password}</small>
+                                        </div> 
+                                        <span>
+                                            <button onclick="alert('Simulasi: Lihat Nilai ${s.username}')" style="background-color: var(--color-link); color: white;">Lihat Nilai</button> 
+                                        </span>
+                                    </li>`;
+             });
+
+            const driveLink = "https://drive.google.com/drive/folders/1u7bBbkQkZEGyLM_LyUStHkrFIqKptyqm?hl=ID";
+            
+            const addStudentFormHtml = `
+                <div class="add-student-box" style="margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+                    <h4>Tambah Peserta Siswa Baru (Mapel ${loggedInMapel.toUpperCase()})</h4>
+                    <p style="font-size: 0.9em; color: #888;">* Hanya dapat menambah akun Siswa untuk Mapel ini. Penghapusan akun hanya bisa dilakukan oleh Admin Utama.</p>
+                    <form onsubmit="return addNewStudentByTeacher(event)">
+                        <div class="form-group"><input type="text" id="new-siswa-username" placeholder="Nama Siswa" required></div>
+                        <div class="form-group"><input type="text" id="new-siswa-password" placeholder="Password (ex: NIS/NISN)" required></div>
+                        <div class="form-group">
+                            <select id="new-siswa-class" required>
+                                <option value="">Pilih Kelas</option>
+                                <option value="X">X</option>
+                                <option value="XI">XI</option>
+                                <option value="XII">XII</option>
+                            </select>
+                        </div>
+                        <button type="submit" style="background-color: var(--color-success); color: white; padding: 10px; border-radius: 5px; border: none;">Tambah Siswa</button>
+                    </form>
+                </div>
+            `;
+            
+            const contentArea = document.getElementById('teacher-content-area');
+            contentArea.innerHTML = `
+                ${addStudentFormHtml}
+                
+                <h4>Kelola Tugas Baru</h4>
+                <button onclick="alert('Simulasi: Form untuk membuat Tugas baru. Tugas akan terkirim ke Siswa Mapel ${loggedInMapel}')" style="background-color: var(--color-guru); color: white; padding: 10px; border-radius: 5px;">Tambah Tugas Baru</button>
+                
+                <h4 style="margin-top: 20px;">Daftar Siswa Mapel ${loggedInMapel.toUpperCase()} (${mapelStudents.length} Peserta)</h4>
+                <ul class="data-list">${studentListHtml}</ul>
+                
+                <div style="margin-top: 30px;">
+                    <h4>Link Google Drive Tugas Mapel ${loggedInMapel.toUpperCase()}</h4>
+                    <a href="${driveLink}" target="_blank" style="display: inline-block; padding: 10px; background-color: var(--color-link); color: white; border-radius: 5px; text-decoration: none;">Buka Folder Upload Tugas (Google Drive)</a>
+                    <p style="margin-top: 5px; font-size: 0.8em; color: #666;">* Link ini digunakan oleh Siswa untuk mengupload tugas.</p>
+                </div>
+            `;
+        }
+
+        // --- FUNGSI ADMIN UTAMA ---
+
+        function updateNewUserFields() {
+            const role = document.getElementById('new-user-role').value;
+            const mapelField = document.getElementById('mapel-field');
+            const classField = document.getElementById('class-field');
+            const mapelSelect = document.getElementById('new-user-mapel');
+            const classSelect = document.getElementById('new-user-class');
+
+            mapelSelect.innerHTML = `<option value="">Pilih Mapel/Akses</option><option value="Jaringan">Jaringan</option><option value="Komputer">Komputer</option><option value="Desain">Desain</option><option value="AdminManager">Admin Manager</option>`;
+            classSelect.innerHTML = `<option value="">Pilih Kelas</option><option value="X">X</option><option value="XI">XI</option><option value="XII">XII</option><option value="NA">Tidak Berlaku</option>`; 
+
+            if (role === 'Siswa') {
+                mapelField.style.display = 'block';
+                classField.style.display = 'block';
+            } else if (role === 'Guru' || role === 'SuperAdmin') {
+                mapelField.style.display = 'block';
+                classField.style.display = 'none'; 
+            } else { // Orangtua
+                mapelField.style.display = 'none';
+                classField.style.display = 'none';
+            }
+        }
+        
+        function addNewUser(event) {
+            event.preventDefault();
+            const username = document.getElementById('new-user-username').value.trim();
+            const password = document.getElementById('new-user-password').value.trim();
+            const role = document.getElementById('new-user-role').value;
+            const mapel = (role === 'Orangtua') ? 'NA' : document.getElementById('new-user-mapel').value;
+            let class_ = 'NA';
+            
+            if (role === 'Siswa') {
+                class_ = document.getElementById('new-user-class').value;
+            } else if (role === 'Guru') {
+                class_ = 'Guru';
+            } else if (role === 'SuperAdmin' || (role === 'Guru' && mapel === 'AdminManager')) {
+                 class_ = 'Admin';
+            }
+
+            let users = JSON.parse(localStorage.getItem('USERS'));
+            if (users.some(u => u.username === username)) {
+                alert('Username sudah ada!');
+                return false;
+            }
+
+            const finalRole = (mapel === 'AdminManager' && role === 'Guru') ? 'SuperAdmin' : role;
+            const finalMapel = (finalRole === 'SuperAdmin') ? 'AdminManager' : mapel;
+
+            if (role !== 'Orangtua' && mapel === "") {
+                 alert('Harap pilih Mata Pelajaran/Akses!');
+                 return false;
+            }
+             if (role === 'Siswa' && class_ === "") {
+                 alert('Harap pilih Kelas Siswa!');
+                 return false;
+            }
+
+            users.push({ username, password, role: finalRole, mapel: finalMapel, class: class_ });
+            localStorage.setItem('USERS', JSON.stringify(users));
+            alert(`✅ Pengguna baru ${username} (${finalRole}) berhasil ditambahkan! Password: ${password}`);
+            loadUserList(); 
+            event.target.reset();
+            return true;
+        }
+
+        function deleteUser(usernameToDelete) {
+            if (usernameToDelete === loggedInUsername) {
+                alert('Anda tidak bisa menghapus akun Anda sendiri saat login!');
+                return;
+            }
+            if (confirm(`Yakin ingin menghapus pengguna ${usernameToDelete}? Semua data terkait akan hilang.`)) {
+                let users = JSON.parse(localStorage.getItem('USERS')).filter(u => u.username !== usernameToDelete);
+                localStorage.setItem('USERS', JSON.stringify(users));
+                
+                let siswaData = JSON.parse(localStorage.getItem('siswaData')) || {};
+                delete siswaData[usernameToDelete];
+                localStorage.setItem('siswaData', JSON.stringify(siswaData));
+
+                // Hapus data absensi juga
+                let absensi = JSON.parse(localStorage.getItem('absensi')) || {};
+                delete absensi[usernameToDelete];
+                localStorage.setItem('absensi', JSON.stringify(absensi));
+
+
+                alert('Pengguna berhasil dihapus!');
+                loadUserList();
+            }
+        }
+        
+        function changeUserPassword(usernameToChange) {
+            const newPass = prompt(`Ganti Password untuk ${usernameToChange}:`);
+            if (newPass && newPass.trim() !== "") {
+                let users = JSON.parse(localStorage.getItem('USERS'));
+                let userIndex = users.findIndex(u => u.username === usernameToChange);
+                if (userIndex !== -1) {
+                    users[userIndex].password = newPass.trim();
+                    localStorage.setItem('USERS', JSON.stringify(users));
+                    alert(`Password ${usernameToChange} berhasil diganti menjadi: ${newPass.trim()}`);
+                    loadUserList(); 
+                }
+            }
+        }
+
+        function loadUserList() {
+            const userListElement = document.getElementById('user-list');
+            if (!userListElement) return;
+
+            const users = JSON.parse(localStorage.getItem('USERS'));
+            let listHtml = '';
+
+            users.forEach(u => {
+                const info = u.role === 'Siswa' ? `Mapel: ${u.mapel}, Kelas: ${u.class}` : 
+                             u.role === 'Guru' ? `Mapel Bimbingan: ${u.mapel}` : 
+                             u.role === 'SuperAdmin' ? `Akses: Admin Manager` : ``;
+                
+                listHtml += `
+                    <li style="border-left-color: var(--color-admin);">
+                        <div>
+                            <strong>${u.username}</strong> (${u.role})<br>
+                            <small>${info}</small>
+                            <small style="color:red; margin-left:10px;">Pass: ${u.password}</small>
+                        </div>
+                        <span>
+                            <button onclick="changeUserPassword('${u.username}')" style="background-color: var(--color-link); color: white;">Ganti Pass</button>
+                            <button onclick="deleteUser('${u.username}')" style="background-color: var(--color-danger); color: white;">Hapus</button>
+                        </span>
+                    </li>
+                `;
+            });
+            userListElement.innerHTML = listHtml;
+        }
+        
+        function loadAdminContactFields() {
+            // Inisialisasi default contact jika belum ada
+            let contact = JSON.parse(localStorage.getItem('adminContact'));
+            if (!contact) {
+                 contact = { phone: '081xxxxxxxxx', email: 'admin@sekolah.com' };
+                 localStorage.setItem('adminContact', JSON.stringify(contact));
+            }
+
+            if (document.getElementById('admin-phone')) {
+                document.getElementById('admin-phone').value = contact.phone;
+                document.getElementById('admin-email').value = contact.email;
+            }
+            // Update Sidebar secara langsung agar sinkron
+            const phoneDisplay = document.getElementById('contact-phone');
+            const emailDisplay = document.getElementById('contact-email');
+            if(phoneDisplay) phoneDisplay.textContent = contact.phone;
+            if(emailDisplay) emailDisplay.textContent = contact.email;
+        }
+
+        function saveAdminContact() {
+            const newPhone = document.getElementById('admin-phone').value;
+            const newEmail = document.getElementById('admin-email').value;
+            localStorage.setItem('adminContact', JSON.stringify({ phone: newPhone, email: newEmail }));
+            alert('Kontak Admin Berhasil Diperbarui dan ter-update di semua Dashboard!');
+            loadAdminContactFields(); 
+        }
+
+        function loadAdminManagerDashboard() {
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = `
+                <div class="admin-box" style="margin-bottom: 20px;">
+                    <h3>Management Pengguna (Admin Utama)</h3>
+                    <p>Anda dapat menambah, mengubah, menghapus, dan mengganti password semua akun.</p>
+                    
+                    <h4 style="margin-top: 20px;">Tambah Pengguna Baru</h4>
+                    <form onsubmit="return addNewUser(event)">
+                        <div class="form-group"><input type="text" id="new-user-username" placeholder="Username/Nama" required></div>
+                        <div class="form-group"><input type="text" id="new-user-password" placeholder="Password/NIS" required></div>
+                        <div class="form-group">
+                            <select id="new-user-role" required onchange="updateNewUserFields()">
+                                <option value="">Pilih Role</option>
+                                <option value="Siswa">Siswa</option>
+                                <option value="Guru">Guru</option>
+                                <option value="Orangtua">Orangtua</option>
+                                </select>
+                        </div>
+                        <div class="form-group" id="mapel-field" style="display:none;"><select id="new-user-mapel"></select></div>
+                        <div class="form-group" id="class-field" style="display:none;"><select id="new-user-class"></select></div>
+                        <button type="submit" style="background-color: var(--color-admin); color: white; padding: 10px; border-radius: 5px;">Tambah Pengguna</button>
+                    </form>
+                </div>
+
+                <div class="admin-box" style="margin-bottom: 20px;">
+                    <h4>Daftar Semua Peserta (Siswa, Guru, Orang Tua)</h4>
+                    <ul class="data-list" id="user-list"></ul>
+                </div>
+
+                <div class="admin-box">
+                    <h4>Kelola Kontak Admin (Telepon/Email)</h4>
+                    <p>Kontak ini akan ditampilkan di semua dashboard peserta.</p>
+                    <div class="form-group"><input type="text" id="admin-phone" placeholder="Nomor Telepon Admin"></div>
+                    <div class="form-group"><input type="email" id="admin-email" placeholder="Email Admin"></div>
+                    <button onclick="saveAdminContact()" style="background-color: var(--color-admin); color: white; padding: 10px; border-radius: 5px;">Simpan Kontak Admin</button>
+                </div>
+            `;
+            updateNewUserFields();
+            loadUserList();
+            loadAdminContactFields();
+            loadProfileData(); 
+        }
+
+        // --- FUNGSI UTAMA CEK LOGIN DAN LOAD DASHBOARD ---
+        function checkLogin() {
+            if (!loggedInRole) {
+                window.location.href = 'loginb.html';
+                return;
+            }
+
+            renderSidebar();
+
+            if (loggedInRole === 'Siswa' || loggedInRole === 'Orangtua') {
+                renderSiswaOrangtuaDashboard();
+            } else if (loggedInRole === 'Guru') {
+                loadTeacherDashboard();
+            } else if (loggedInRole === 'SuperAdmin' && loggedInMapel === 'AdminManager') {
+                loadAdminManagerDashboard();
+            }
+            
+            loadProfileData();
+        }
+
+        function renderSidebar() {
+            const contact = JSON.parse(localStorage.getItem('adminContact')) || { phone: '081xxxxxxxxx', email: 'admin@sekolah.com' };
+            const isContactEditable = loggedInRole === 'SuperAdmin';
+            const showProfileFeatures = (loggedInRole !== 'Orangtua');
+
+            document.getElementById('username-display').textContent = loggedInUsername;
+            document.getElementById('mapel-display').textContent = loggedInMapel;
+            document.getElementById('role-text').textContent = (loggedInRole === 'SuperAdmin') ? 'Admin Utama' : loggedInRole;
+
+            const contactHTML = `
+                <div class="profile-section">
+                    <h3>Kontak Admin</h3>
+                    <p>Telepon Admin: <span id="contact-phone">${contact.phone}</span></p>
+                    <p>Email Admin: <span id="contact-email">${contact.email}</span></p>
+                    ${isContactEditable ? '<p style="color:red; font-weight:bold;">(Dapat Diubah di Konten Utama)</p>' : '<p style="color:#666; font-weight:bold;">(Tidak Dapat Diubah)</p>'}
+                </div>
+            `;
+            
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.innerHTML = `
+                <div class="profile-section">
+                    <h3>Profil & Identitas</h3>
+                    <p>Foto & Data Pribadi (Dapat Diubah)</p>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <img src="user_default_avatar.png" alt="User Avatar" id="profile-pic" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ccc; object-fit: cover;">
+                    </div>
+                    
+                    ${showProfileFeatures ? `
+                        <button onclick="choosePhoto()" style="background-color: var(--color-primary); color: white; padding: 8px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">Pilih Foto</button>
+                        <button id="hapus-foto" onclick="deletePhoto()" style="background-color: var(--color-danger); color: white; padding: 8px; border: none; border-radius: 4px; cursor: pointer;">Hapus Foto</button>
+                    ` : ''}
+
+                    ${loggedInRole === 'Siswa' ? `
+                        <div class="form-group" style="margin-top: 15px;"><label>NISN</label><input type="text" id="nisn-input" placeholder="NISN Wajib Diisi"></div>
+                        <div class="form-group"><label>NIS</label><input type="text" id="nis-input" placeholder="NIS Wajib Diisi"></div>
+                        <div class="form-group"><label>Kelas</label><input type="text" id="kelas-input" placeholder="Kelas" readonly style="background-color: #eee;"></div>
+                        <div class="form-group"><label>Sekolah</label><input type="text" id="sekolah-input" placeholder="Sekolah" readonly style="background-color: #eee;"></div>
+                        <button id="save-profile" onclick="saveSiswaData()" style="background-color: var(--color-success); color: white; padding: 10px; border: none; border-radius: 5px; width: 100%; margin-top: 10px;">Simpan Data Profil</button>
+                    ` : ''}
+                </div>
+                
+                ${contactHTML}
+                
+                <button class="logout-button" onclick="logout()">Logout</button>
+            `;
+            loadAdminContactFields(); // Pastikan kontak dimuat ke sidebar
+        }
+
+        function renderSiswaOrangtuaDashboard() {
+             const isSiswa = loggedInRole === 'Siswa';
+             const mainContent = document.querySelector('.main-content');
+
+             mainContent.innerHTML = `
+                <div class="menu-access" style="border-left: 5px solid var(--color-siswa);">
+                    <h3>Menu Akses ${isSiswa ? 'Siswa' : 'Orangtua'}</h3>
+                    
+                    ${isSiswa ? `
+                        <p class="absensi-status" id="absensi-status-text" style="font-weight: bold; color: var(--color-danger);">Anda belum Absen hari ini.</p>
+                        <button onclick="doAbsen()" style="padding: 10px 20px; background-color: var(--color-siswa); color: white; border: none; border-radius: 5px; margin-bottom: 20px;">Absensi Hari Ini</button>
+                    ` : ''}
+                    
+                    <div class="mapel-info">
+                        Anda terdaftar di **Mapel ${loggedInMapel}** Kelas **${loggedInClass}**. Silakan gunakan menu di bawah untuk masuk ke Materi.
+                    </div>
+                    
+                    <h4>Pilih Mata Pelajaran & Kelas</h4>
+                    <div class="button-group">
+                        <button onclick="alert('Simulasi: Mengarahkan ke halaman pilihan_menu.html')">Akses Materi Mapel</button>
+                    </div>
+                </div>
+
+                <div class="menu-access" style="background-color: #e0f7fa; border-left: 5px solid var(--color-admin);">
+                    <h3>Lihat Nilai & Laporan</h3>
+                    <p>Akses ke semua nilai mata pelajaran Anda.</p>
+                    <button onclick="alert('Simulasi: Menampilkan Nilai Siswa Semua Mapel (Komputer, Jaringan, Desain)')" style="background-color: var(--color-admin); color: white; padding: 10px; border: none; border-radius: 5px;">Lihat Rapor/Nilai</button>
+                </div>
+
+                <div class="upload-task" style="border-left: 5px solid var(--color-primary); padding: 20px; border-radius: 8px; background-color: #fff8e1;">
+                    <h3>Upload Tugas</h3>
+                    <p>Akses folder Google Drive **khusus Mapel Jaringan** untuk mengunggah tugas yang sudah selesai.</p>
+                    <a href="${(loggedInMapel === 'Jaringan' && isSiswa) ? 'https://drive.google.com/drive/folders/1u7bBbkQkZEGyLM_LyUStHkrFIqKptyqm?hl=ID' : 'javascript:void(0);'}" target="_blank" onclick="${(loggedInMapel !== 'Jaringan' || !isSiswa) ? 'alert(\'Akses Ditolak. Link ini hanya untuk Siswa Mapel Jaringan.\')' : ''}" style="display: inline-block; background-color: var(--color-link); color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none;">
+                        Buka Google Drive Tugas Jaringan
+                    </a>
+                </div>
+            `;
+            if (isSiswa) loadSiswaData();
+        }
+
+        
+        // --- INIT & Event Listener Foto ---
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLogin(); 
+
+            // LOGIKA PEMILIHAN FILE FOTO
+            const fileInput = document.getElementById('file-input-changer');
+            
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const profilePic = document.getElementById('profile-pic');
+                        if (profilePic) {
+                            profilePic.src = e.target.result; 
+                            saveProfileData(); 
+                            alert('Foto Profil Berhasil Diubah dan Disimpan!');
+                        }
+                    };
+                    reader.readAsDataURL(file); 
+                }
+            });
+        });
+    </script>
+</body>
+</html>
